@@ -28,7 +28,7 @@ The collection currently covers four core properties—**causal faithfulness, co
   - [Types of obfuscation](#types-of-obfuscation)
 - [How training may change monitorability](#how-training-may-change-monitorability)
 - [Evaluation frameworks and empirical trends](#evaluation-frameworks-and-empirical-trends)
-- [Mitigations](#mitigations)
+- [A framework for mitigation](#a-framework-for-mitigation)
 - [Commentary on legibility](#commentary-on-legibility)
 - [Open questions](#open-questions)
 
@@ -261,35 +261,27 @@ Important hypotheses to test rather than assume include:
   **Authors:** Bronson Schoen et al.  
   **TL;DR:** Deliberative alignment greatly reduces but does not eliminate covert actions across broad out-of-distribution evaluations. CoTs expose evaluation awareness that is causally associated with reduced covert behavior, complicating interpretation of apparent safety.
 
-## Mitigations
+## A framework for mitigation
 
-No single intervention addresses all threat models. Candidate mitigations should be tied to the property they target.
+A mitigation can act on the **agent**, the **monitor**, or the **system combining their evidence**. It should name the property it targets—faithfulness, coverage, legibility, or controllability—and be evaluated against both ordinary training drift and an adaptive agent. We rank directions by confidence that existing evidence supports the mechanism and that the remaining gap is experimentally tractable. The score is not a claim that the mitigation is already solved.
 
-### At training time
+### 1. Improve monitor inference and elicitation — 8.5/10
 
-- preserve a private reasoning channel rather than applying direct penalties to suspicious thoughts;
-- track monitorability alongside capability throughout pretraining and post-training;
-- use limited supervised traces or auxiliary causal-importance and sufficiency rewards where appropriate;
-- avoid reward terms that place output performance and CoT transparency directly in conflict;
-- evaluate output-only and process supervision for indirect obfuscation;
-- retain model checkpoints and run monitorability regression tests across training.
+[Guan et al. (2025)](https://arxiv.org/abs/2512.18311) find that stronger monitors, more monitor test-time compute, and targeted follow-up questions improve monitorability in their evaluation suite. This is the clearest existing positive intervention because it improves oversight without directly placing optimization pressure on the agent's CoT.
 
-### Improve the monitor
+**Research gap:** test whether these gains persist for long, technical, or multilingual traces and when the agent is trained against the complete elicitation procedure.
 
-- scale monitor capability and test-time compute;
-- use follow-up questions designed to elicit omitted decision-relevant information;
-- combine CoT, actions, outputs, and white-box signals rather than treating CoT as a complete safety case;
-- use ensembles with diverse monitor architectures and training data;
-- adapt monitors to long contexts, code and tool-use environments, specialist domains, low-resource languages, and language mixing;
-- use retrieval or hierarchical summarization for long traces while separately checking whether summarization discards suspicious evidence.
+### 2. Train for causal importance and sufficiency — 7.5/10
 
-### Evaluate the deployment context
+[Yu et al. (2026)](https://arxiv.org/abs/2604.22074) report that limited supervised fine-tuning or auxiliary CIR/SR rewards improve causal importance and sufficiency while preserving accuracy in their setting. This directly targets reliance and coverage rather than surface readability.
 
-- match evaluation length and domain to deployment;
-- test fixed and adaptive adversaries;
-- distinguish default monitorability from monitorability after the agent learns the monitor;
-- report agent capability and monitor capability separately;
-- treat human readability and model-monitor readability as different outcomes.
+**Research gap:** determine whether the result scales across tasks and models without creating the obfuscation pressure observed under other forms of CoT optimization by [Baker et al. (2025)](https://arxiv.org/abs/2503.11926), [Skaf et al. (2025)](https://arxiv.org/abs/2506.01926), and [Drori et al. (2025)](https://arxiv.org/abs/2511.11584).
+
+### 3. Combine independent evidence channels — 7/10
+
+[Wagner et al. (2025)](https://alignment.anthropic.com/2025/subtle-reasoning/) show that a reasoning monitor can be persuaded even when behavioral evidence remains suspicious. This supports combining CoT with independently evaluated actions and outputs rather than treating any one channel as decisive.
+
+**Research gap:** develop and validate decision rules for combining channels when their failures are correlated, including abstention or escalation when CoT and behavior disagree.
 
 ## Commentary on legibility
 
