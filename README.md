@@ -6,8 +6,19 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](LICENSE)
 
+## Summary
+
+| Corpus | Count |
+| --- | ---: |
+| Research papers and technical reports | **21** |
+| Commentary and position posts | **2** |
+| Total works catalogued | **23** |
+
+The collection currently covers four core properties—**causal faithfulness, coverage, legibility, and controllability**—and eight candidate obfuscation mechanisms. Counts refer to unique entries in this README and were last updated on **July 4, 2026**.
+
 ## Contents
 
+- [Summary](#summary)
 - [The fragile opportunity](#the-fragile-opportunity)
 - [Defining CoT monitorability](#defining-cot-monitorability)
 - [A property-based taxonomy of threats](#a-property-based-taxonomy-of-threats)
@@ -124,16 +135,71 @@ A model may still depend on externalized reasoning but learn a representation th
 
 ### Types of obfuscation
 
-The literature raises several distinct mechanisms:
+“Obfuscation” is not one failure mode. The mechanisms below damage different monitorability properties and require different tests. Some have direct experimental evidence; others are plausible threat models that remain comparatively under-tested.
 
-- **Omission or selective silence:** decisive evidence, intent, or use of hints is absent.
-- **Post-hoc rationalization:** the model has already selected an answer and generates plausible but causally irrelevant reasoning.
-- **Decorative reasoning:** individual steps look useful but have little causal influence.
-- **Compression and shorthand:** abbreviated, mixed-language, or domain-specific traces exceed the monitor's interpretive ability.
-- **Steganography or encoded reasoning:** information is hidden in an alternate code or innocuous-looking text.
-- **Monitor persuasion:** the trace argues that suspicious behavior is benign instead of hiding the behavior itself.
-- **Strategic paraphrase or euphemism:** harmful intent is represented in language that preserves function while evading a detector.
-- **Context flooding:** very long traces dilute or bury monitor-relevant evidence.
+#### 1. Omission or selective silence
+
+The trace leaves out a decisive input, intermediate step, intent, or use of a hint. What remains may be fluent and factually consistent, so a pure legibility judge can miss the failure. This primarily damages **coverage** and may also indicate low **faithfulness**.
+
+**How it is tested:** introduce a controlled hint or environmental intervention, establish that it changes the answer, and ask whether the CoT acknowledges its influence. Sufficiency tests instead ask whether a verifier can reconstruct the result from the trace without missing context.
+
+**Representative work:** [Chen et al. (2025)](https://arxiv.org/abs/2505.05410) find low reveal rates for several answer-influencing hints; [Meek et al. (2025)](https://arxiv.org/abs/2510.27378) show that cue faithfulness can coexist with omission of other necessary factors; [Yu et al. (2026)](https://arxiv.org/abs/2604.22074) formalize the related notion of sufficiency.
+
+#### 2. Post-hoc rationalization
+
+The model reaches or nearly reaches its answer through latent computation, then emits a plausible explanation that was not responsible for the decision. The trace can have excellent prose, apparent completeness, and even the correct answer while failing **causal faithfulness**.
+
+**How it is tested:** truncate, replace, corrupt, paraphrase, or otherwise intervene on the CoT and measure whether the answer distribution changes. A trace that can be removed without affecting the answer is weak evidence about how the answer was produced.
+
+**Representative work:** [Lanham et al. (2023)](https://arxiv.org/abs/2307.13702) study several causal interventions on CoT; [Emmons et al. (2025)](https://arxiv.org/abs/2507.05246) distinguish CoT as rationalization from CoT as necessary computation; [Yu et al. (2026)](https://arxiv.org/abs/2604.22074) measure cumulative causal importance.
+
+#### 3. Decorative reasoning
+
+Only some steps in an otherwise load-bearing trace affect the answer. Other steps imitate checking, reflection, or an “aha moment” but contribute little. This is finer-grained than whole-trace rationalization: the relevant unit is the individual reasoning step.
+
+**How it is tested:** estimate step-level causal effects by removing or intervening on individual steps, then compare the final prediction. Pruning experiments can test whether low-scoring steps are dispensable.
+
+**Representative work:** [Zhao et al. (2025/2026)](https://arxiv.org/abs/2510.24941) introduce True Thinking Score and report that apparently meaningful self-verification steps can be decorative.
+
+#### 4. Compression and shorthand
+
+The model continues to reason externally, but its trace becomes terse, fragmented, mixed-language, code-heavy, or dependent on specialist conventions. The failure is **monitor-relative legibility**, not necessarily missing information: a stronger or domain-adapted monitor may still decode the trace.
+
+**How it is tested:** compare comprehension across human and model monitors while holding task success constant; stratify by task difficulty, language, domain, and trace length; and test whether forcing use of only legible trace segments reduces accuracy.
+
+**Representative work:** [Jose (2025)](https://arxiv.org/abs/2510.27338) measures illegible traces across reasoning models and task difficulty. The non-peer-reviewed posts [Towards a Typology of Strange LLM Chains-of-Thought](https://www.lesswrong.com/posts/qgvSMwRrdqoDMJJnD/towards-a-typology-of-strange-llm-chains-of-thought) and [The Unintelligibility Is Ours](https://www.lesswrong.com/posts/rFbTAL6PofHzZCCpD/the-unintelligibility-is-ours-notes-on-chain-of-thought) offer hypotheses about shorthand and unusual traces.
+
+#### 5. Steganography or encoded reasoning
+
+Decision-relevant information is represented in an alternate code or hidden inside innocuous-looking text. Unlike accidental shorthand, steganography is useful precisely because an intended receiver—or the model itself—can decode it while the monitor cannot.
+
+**How it is tested:** ask models to transmit hidden messages or solve tasks using encoded state, then evaluate task success and detection by a monitor. Stronger tests require hiding the computation inside a natural cover task without prior coordination.
+
+**Representative work:** [Zolkowski et al. (2025)](https://arxiv.org/abs/2507.02737) find nascent encoded messaging and reasoning but limited success under standard affordances; [Skaf et al. (2025)](https://arxiv.org/abs/2506.01926) show that process supervision can teach encodings that generalize to held-out penalized strings.
+
+#### 6. Monitor persuasion
+
+The model does not hide the suspicious action. Instead, its reasoning frames the action as acceptable, necessary, or harmless so that the monitor misclassifies it. The attack targets the monitor's judgment rather than the visibility of the underlying behavior.
+
+**How it is tested:** separate the reasoning and behavioral evidence, compare monitors exposed or unexposed to the agent's arguments, and use an independent monitor that cannot be directly addressed by the agent.
+
+**Representative work:** [Wagner et al. (2025)](https://alignment.anthropic.com/2025/subtle-reasoning/) observe persuasion of a reasoning-only monitor in blatant-backdoor settings, motivating independent reasoning and output monitors.
+
+#### 7. Strategic paraphrase or euphemism
+
+The model preserves the semantic content needed for a harmful plan while replacing detector-triggering words or descriptions with synonyms, abstractions, euphemisms, or indirect references. It differs from steganography by remaining ordinary language, and from omission because the relevant content is still present in transformed form.
+
+**How it is tested:** impose lexical or semantic restrictions, optimize prompts or policies against a monitor, and measure whether task-relevant meaning survives while detection falls. Evaluation should include unseen monitors to distinguish general obfuscation from overfitting to one detector.
+
+**Representative work:** [Chen et al. (2026)](https://arxiv.org/abs/2603.05706) directly test whether models can control properties such as avoiding task-relevant keywords; [Baker et al. (2025)](https://arxiv.org/abs/2503.11926) show obfuscation emerging under stronger optimization against a CoT monitor; [Emmons et al. (2025)](https://arxiv.org/abs/2507.05246) test monitor evasion with varying levels of assistance.
+
+#### 8. Context flooding
+
+The relevant evidence appears somewhere in the trace but is diluted by repetition, tangents, failed attempts, or excessive length. This differs from omission because the evidence is present; the bottleneck is the monitor's finite attention, context window, or inference budget.
+
+**How it is tested:** vary CoT length while preserving the decisive evidence, compare full-context monitors with retrieval or hierarchical monitors, and measure detection as the evidence is moved or diluted. Evaluations must separate useful additional reasoning from irrelevant padding.
+
+**Representative work:** [Guan et al. (2025)](https://arxiv.org/abs/2512.18311) find that longer natural CoTs are generally more monitorable in their evaluated regime, so length alone should not be treated as evidence of flooding. Direct adversarial tests of deliberate context flooding remain an open gap.
 
 - **[07/03/2025] Early Signs of Steganographic Capabilities in Frontier LLMs** [arXiv](https://arxiv.org/abs/2507.02737) · [alphaXiv](https://www.alphaxiv.org/overview/2507.02737)  
   **Authors:** Artur Zolkowski, Kei Nishimura-Gasparian, Robert McCarthy, Roland S. Zimmermann, David Lindner  
