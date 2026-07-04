@@ -56,6 +56,16 @@ Existing definitions emphasize different necessary properties:
 | Meek et al. | **Faithfulness + verbosity** | Does the trace disclose influential factors, and does it state every factor needed to solve the task? |
 | Yu et al. | **Causal importance + sufficiency** | Does the answer depend on the trace, and can an external verifier recover an unambiguous answer from it? |
 
+Operationally, failures cluster into three forms:
+
+| Component | What failure looks like | Typical manifestations |
+| --- | --- | --- |
+| **Faithfulness** | **Unfaithful CoT:** the visible trace does not reflect the reasoning that determines the answer. | Suppression or omission of decisive information; post-hoc rationalization; causally meaningless reasoning or obfuscation. |
+| **Legibility** | **Illegible CoT:** the trace remains part of the computation, but its semantics drift away from forms the monitor can interpret. | An emergent “internal language”; repetition; compressed shorthand; symbols with arbitrary or context-specific meanings; readable excuses that persuade the monitor by feigning benign intent. |
+| **Adversarial legibility** | **Steganographic CoT:** the model uses an illegible or hidden encoding because it is aware of the situation, evaluation, or monitor. | Encoded reasoning, covert messages, or benign-looking cover text selected to preserve information for the model while concealing it from the monitor. |
+
+The last two rows differ by **situational awareness and intent**. Ordinary illegibility may emerge from optimization or compression without an evasion objective; steganography is monitor-relative concealment selected in response to the monitoring context. Monitor persuasion is a boundary case: the words remain readable, but their pragmatic meaning misrepresents the model's intent.
+
 These definitions overlap but are not interchangeable. A trace can be readable but omit a decisive hint; complete but causally irrelevant; causally important but encoded illegibly; or informative by default but easy to reshape under optimization. This divergence motivates a survey organized by measurable properties and corresponding threat models rather than by a single scalar definition.
 
 - **[10/28/2025] A Pragmatic Way to Measure Chain-of-Thought Monitorability** [arXiv](https://arxiv.org/abs/2510.23966) · [alphaXiv](https://www.alphaxiv.org/overview/2510.23966)  
