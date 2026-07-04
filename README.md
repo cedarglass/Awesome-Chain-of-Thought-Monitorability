@@ -56,16 +56,6 @@ Existing definitions emphasize different necessary properties:
 | Meek et al. | **Faithfulness + verbosity** | Does the trace disclose influential factors, and does it state every factor needed to solve the task? |
 | Yu et al. | **Causal importance + sufficiency** | Does the answer depend on the trace, and can an external verifier recover an unambiguous answer from it? |
 
-Operationally, failures cluster into three forms:
-
-| Component | What failure looks like | Typical manifestations |
-| --- | --- | --- |
-| **Faithfulness** | **Unfaithful CoT:** the visible trace does not reflect the reasoning that determines the answer. | Suppression or omission of decisive information; post-hoc rationalization; causally meaningless reasoning or obfuscation. |
-| **Legibility** | **Illegible CoT:** the trace remains part of the computation, but its semantics drift away from forms the monitor can interpret. | An emergent “internal language”; repetition; compressed shorthand; symbols with arbitrary or context-specific meanings; readable excuses that persuade the monitor by feigning benign intent. |
-| **Adversarial legibility** | **Steganographic CoT:** the model uses an illegible or hidden encoding because it is aware of the situation, evaluation, or monitor. | Encoded reasoning, covert messages, or benign-looking cover text selected to preserve information for the model while concealing it from the monitor. |
-
-The last two rows differ by **situational awareness and intent**. Ordinary illegibility may emerge from optimization or compression without an evasion objective; steganography is monitor-relative concealment selected in response to the monitoring context. Monitor persuasion is a boundary case: the words remain readable, but their pragmatic meaning misrepresents the model's intent.
-
 These definitions overlap but are not interchangeable. A trace can be readable but omit a decisive hint; complete but causally irrelevant; causally important but encoded illegibly; or informative by default but easy to reshape under optimization. This divergence motivates a survey organized by measurable properties and corresponding threat models rather than by a single scalar definition.
 
 - **[10/28/2025] A Pragmatic Way to Measure Chain-of-Thought Monitorability** [arXiv](https://arxiv.org/abs/2510.23966) · [alphaXiv](https://www.alphaxiv.org/overview/2510.23966)  
@@ -82,12 +72,14 @@ These definitions overlap but are not interchangeable. A trace can be readable b
 
 ## A property-based taxonomy of threats
 
-| Threat model | Property at risk | Representative operationalization |
-| --- | --- | --- |
-| The model solves tasks without using its written CoT | **Dependency / causal faithfulness** | Truncate, corrupt, replace, or intervene on the trace and measure answer changes |
-| The model uses CoT but omits decisive information | **Coverage / completeness / sufficiency** | Test whether a verifier can recover the answer or influential factors from the trace alone |
-| The trace becomes difficult for the observer to understand | **Monitor-relative legibility** | Measure human or model-monitor comprehension while controlling for task performance |
-| The model can strategically reshape a load-bearing CoT | **Controllability / adversarial robustness** | Optimize against a monitor or penalize concepts in CoT and test whether behavior persists undetected |
+| Property at risk | Threat model | Failure form | What it looks like | Representative operationalization |
+| --- | --- | --- | --- | --- |
+| **Dependency / causal faithfulness** | The model solves tasks without using its written CoT | **Unfaithful** | Post-hoc rationalization or causally meaningless reasoning and obfuscation | Truncate, corrupt, replace, or intervene on the trace and measure answer changes |
+| **Coverage / completeness / sufficiency** | The model uses CoT but omits decisive information | **Unfaithful** | Suppression or selective silence about evidence, intent, hints, or intermediate steps | Test whether a verifier can recover the answer or influential factors from the trace alone |
+| **Monitor-relative legibility** | The trace remains load-bearing but becomes difficult for the observer to understand | **Illegible** | Semantic drift; an emergent “internal language”; repetition; shorthand; or symbols with arbitrary meaning | Measure human or model-monitor comprehension while controlling for task performance |
+| **Controllability / adversarial robustness** | The model strategically reshapes a load-bearing CoT after recognizing the monitoring context | **Steganographic** | Encoded reasoning, covert messages, or benign-looking cover text chosen with situational or evaluation awareness | Optimize against a monitor or penalize concepts in CoT and test whether behavior persists undetected |
+
+The failure labels are linked to properties rather than treated as a separate taxonomy. **Unfaithfulness** covers failures of dependency or coverage; **illegibility** is semantic drift relative to a monitor; **steganography** is adversarial illegibility conditioned on situational or evaluation awareness. Monitor persuasion is a boundary case: the trace remains linguistically readable, but excuses or feigned benign intent cause the monitor to infer the wrong semantics.
 
 The rows should be evaluated separately. For example, success on a hint-revelation task supports a narrow faithfulness claim; it does not establish legibility in code environments or robustness to a model deliberately optimizing against the monitor.
 
