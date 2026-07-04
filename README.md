@@ -28,7 +28,7 @@ The collection currently covers four core properties—**causal faithfulness, co
   - [Types of obfuscation](#types-of-obfuscation)
 - [How training may change monitorability](#how-training-may-change-monitorability)
 - [Evaluation frameworks and empirical trends](#evaluation-frameworks-and-empirical-trends)
-- [A framework for mitigation](#a-framework-for-mitigation)
+- [Evidence-backed mitigation directions](#evidence-backed-mitigation-directions)
 - [Commentary on legibility](#commentary-on-legibility)
 - [Open questions](#open-questions)
 
@@ -261,27 +261,33 @@ Important hypotheses to test rather than assume include:
   **Authors:** Bronson Schoen et al.  
   **TL;DR:** Deliberative alignment greatly reduces but does not eliminate covert actions across broad out-of-distribution evaluations. CoTs expose evaluation awareness that is causally associated with reduced covert behavior, complicating interpretation of apparent safety.
 
-## A framework for mitigation
+## Evidence-backed mitigation directions
 
-A mitigation can act on the **agent**, the **monitor**, or the **system combining their evidence**. It should name the property it targets—faithfulness, coverage, legibility, or controllability—and be evaluated against both ordinary training drift and an adaptive agent. We rank directions by confidence that existing evidence supports the mechanism and that the remaining gap is experimentally tractable. The score is not a claim that the mitigation is already solved.
+A mitigation claim should specify its intervention layer, target property, threat model, and a held-out adaptive evaluation. The directions below have direct empirical motivation, but none is established as robust.
 
-### 1. Improve monitor inference and elicitation — 8.5/10
+### Adaptive monitor elicitation
 
-[Guan et al. (2025)](https://arxiv.org/abs/2512.18311) find that stronger monitors, more monitor test-time compute, and targeted follow-up questions improve monitorability in their evaluation suite. This is the clearest existing positive intervention because it improves oversight without directly placing optimization pressure on the agent's CoT.
+**Evidence:** [Guan et al. (2025)](https://arxiv.org/abs/2512.18311) find gains from stronger monitors, additional inference compute, and follow-up questions.
 
-**Research gap:** test whether these gains persist for long, technical, or multilingual traces and when the agent is trained against the complete elicitation procedure.
+**Decisive experiment:** compare fixed-pass monitoring with a budget-matched monitor that asks targeted questions across long, technical, and multilingual traces, then fine-tune agents against each complete protocol. Measure detection at a fixed false-positive rate on held-out tasks and attacks.
 
-### 2. Train for causal importance and sufficiency — 7.5/10
+**Would weaken this direction:** gains disappear after compute matching or adaptive agent training.
 
-[Yu et al. (2026)](https://arxiv.org/abs/2604.22074) report that limited supervised fine-tuning or auxiliary CIR/SR rewards improve causal importance and sufficiency while preserving accuracy in their setting. This directly targets reliance and coverage rather than surface readability.
+### Causal and sufficient reasoning objectives
 
-**Research gap:** determine whether the result scales across tasks and models without creating the obfuscation pressure observed under other forms of CoT optimization by [Baker et al. (2025)](https://arxiv.org/abs/2503.11926), [Skaf et al. (2025)](https://arxiv.org/abs/2506.01926), and [Drori et al. (2025)](https://arxiv.org/abs/2511.11584).
+**Evidence:** [Yu et al. (2026)](https://arxiv.org/abs/2604.22074) report CIR/SR improvements from supervised or auxiliary objectives, while [Baker et al. (2025)](https://arxiv.org/abs/2503.11926), [Skaf et al. (2025)](https://arxiv.org/abs/2506.01926), and [Drori et al. (2025)](https://arxiv.org/abs/2511.11584) show that pressure on visible reasoning can induce concealment.
 
-### 3. Combine independent evidence channels — 7/10
+**Decisive experiment:** train matched agents with outcome-only rewards or CIR/SR objectives. Evaluate task accuracy, causal interventions on reasoning, trace-only answer recovery, and transfer attacks against unseen monitors.
 
-[Wagner et al. (2025)](https://alignment.anthropic.com/2025/subtle-reasoning/) show that a reasoning monitor can be persuaded even when behavioral evidence remains suspicious. This supports combining CoT with independently evaluated actions and outputs rather than treating any one channel as decisive.
+**Would weaken this direction:** metric gains do not transfer beyond the training evaluator, or concealment rises at matched capability.
 
-**Research gap:** develop and validate decision rules for combining channels when their failures are correlated, including abstention or escalation when CoT and behavior disagree.
+### Calibrated fusion of independent evidence
+
+**Evidence:** [Wagner et al. (2025)](https://alignment.anthropic.com/2025/subtle-reasoning/) show that reasoning-monitor persuasion can coexist with suspicious behavior, motivating joint use of CoT, actions, and outputs.
+
+**Decisive experiment:** compare preregistered fusion and abstention rules with the best single-channel monitor under attacks optimized against one channel and against the complete system. Report detection at fixed false-positive and escalation rates.
+
+**Would weaken this direction:** fusion gains vanish under joint attacks or because channel errors are too correlated.
 
 ## Commentary on legibility
 
